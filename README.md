@@ -4,12 +4,14 @@
 
 The gamepad and its receiver communicate via bluetooth. The receiver is interfaced via SPI.
 SPI parameters:
+```
 Clock rate - 100-500 KHz (I personally prefer 250 KHz).
 Order - Least Significant Bit First
 Width - 8 bit (Standard)
 CPOL - 1
 CPHA - 1
 SS enable - when line is low.
+```
 
 ## PS2 receiver pinout:
 ``` _
