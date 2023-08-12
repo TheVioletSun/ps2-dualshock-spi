@@ -12,7 +12,7 @@ CPHA - 1
 SS enable - when line is low.
 
 ## PS2 receiver pinout:
- _
+``` _
 /*|	DATA (SPI MOSI)
 |*|	COMMAND (SPI MISO)
 |*|	MOTOR POWER (not used with wireless gamepad)
@@ -24,6 +24,7 @@ SS enable - when line is low.
 |*|	CLOCK (SPI CLK)
 |*|	UNUSED
 \*|	AKNOWLEDGE (not used in the library)
+```
 
 ## Library overview
 This library is written in C and is platform independent, meaning that SPI connection should be implemented by a programmer. As a matter of fact, this library, just maps protocol commands for the PS2 controller, leaving low level details for a user of the library.
