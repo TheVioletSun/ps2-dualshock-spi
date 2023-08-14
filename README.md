@@ -33,3 +33,31 @@ This library is written in C and is platform independent, meaning that SPI conne
 
 To ease the porting of the library, the `porting-spi.h` file is provided, which describes functions, which are platform dependent, to be implemented. You could implement those functions anywhere, even in main.c, just make sure that the implementation is visible from the places where you call the library API.
 
+## Response mapping
+The main polling command results in the response from the gamepad receiver that contains control state. This response can be mapped as follows:
+
+Control		Byte num	Byte content
+
+Digital mode
+
+Up		4		11101111
+Down		4		10111111
+Left		4		01111111
+Right		4		11011111
+Cross		5		10111111
+Square		5		01111111
+Circle		5		11011111
+Triangle	5		11101111
+Select		4		11111110
+Start		4		11110111
+L.Trigger	5		11111110
+R.Trigger	5		11111101
+L.Shift		5		11111011
+R.Shift		5		11110111
+L.Stick.press	4		11111101
+R.Stick		4		11111011
+
+Analog mode
+
+TBD
+
