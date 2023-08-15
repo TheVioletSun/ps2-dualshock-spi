@@ -85,22 +85,22 @@ uint8_t ps2_main_exchange(ps2_dualshock_dev *dev)
 static void ps2_to_idle_state(ps2_dualshock_dev *dev)
 {
 	dev->state->is_idle = 1;
-	dev->state->state.up = 0;
-	dev->state->state.down = 0;
-	dev->state->state.left = 0;
-	dev->state->state.right = 0;
-	dev->state->state.start = 0;
-	dev->state->state.select = 0;
-	dev->state->state.cross = 0;
-	dev->state->state.circle = 0;
-	dev->state->state.square = 0;
-	dev->state->state.triangle = 0;
-	dev->state->state.l_trigger = 0;
-	dev->state->state.r_trigger = 0;
-	dev->state->state.l_shift = 0;
-	dev->state->state.r_shift = 0;
-	dev->state->state.l_stick_press = 0;
-	dev->state->state.r_stick_press = 0;
+	dev->state->up = 0;
+	dev->state->down = 0;
+	dev->state->left = 0;
+	dev->state->right = 0;
+	dev->state->start = 0;
+	dev->state->select = 0;
+	dev->state->cross = 0;
+	dev->state->circle = 0;
+	dev->state->square = 0;
+	dev->state->triangle = 0;
+	dev->state->l_trigger = 0;
+	dev->state->r_trigger = 0;
+	dev->state->l_shift = 0;
+	dev->state->r_shift = 0;
+	dev->state->l_stick_press = 0;
+	dev->state->r_stick_press = 0;
 }
 
 static void ps2_parse_response(uint8_t *resp, ps2_dualshock_dev *dev)
@@ -111,22 +111,22 @@ static void ps2_parse_response(uint8_t *resp, ps2_dualshock_dev *dev)
 	}
 
 	dev->state->is_idle = 0;
-	dev->state->state.up = !(resp[3] & 0x10);
-	dev->state->state.down = !(resp[3] & 0x40);
-	dev->state->state.left = !(resp[3] & 0x80);
-	dev->state->state.right = !(resp[3] & 0x20);
-	dev->state->state.start = !(resp[3] & 0x8);
-	dev->state->state.select = !(resp[3] & 0x1);
-	dev->state->state.cross = !(resp[4] & 0x40);
-	dev->state->state.circle = !(resp[4] & 0x20);
-	dev->state->state.square = !(resp[4] & 0x80);
-	dev->state->state.triangle = !(resp[4] & 0x10);
-	dev->state->state.l_trigger = !(resp[4] & 0x1);
-	dev->state->state.r_trigger = !(resp[4] & 0x2);
-	dev->state->state.l_shift = !(resp[4] & 0x4);
-	dev->state->state.r_shift = !(resp[4] & 0x8);
-	dev->state->state.l_stick_press = !(resp[3] & 0x2);
-	dev->state->state.r_stick_press = !(resp[3] & 0x4);
+	dev->state->up = !(resp[3] & 0x10);
+	dev->state->down = !(resp[3] & 0x40);
+	dev->state->left = !(resp[3] & 0x80);
+	dev->state->right = !(resp[3] & 0x20);
+	dev->state->start = !(resp[3] & 0x8);
+	dev->state->select = !(resp[3] & 0x1);
+	dev->state->cross = !(resp[4] & 0x40);
+	dev->state->circle = !(resp[4] & 0x20);
+	dev->state->square = !(resp[4] & 0x80);
+	dev->state->triangle = !(resp[4] & 0x10);
+	dev->state->l_trigger = !(resp[4] & 0x1);
+	dev->state->r_trigger = !(resp[4] & 0x2);
+	dev->state->l_shift = !(resp[4] & 0x4);
+	dev->state->r_shift = !(resp[4] & 0x8);
+	dev->state->l_stick_press = !(resp[3] & 0x2);
+	dev->state->r_stick_press = !(resp[3] & 0x4);
 
 }
 
