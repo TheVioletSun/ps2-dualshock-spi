@@ -4,7 +4,7 @@
 #define PS2_DEFINITIONS
 
 /* Function type definitions */
-typedef void (*tx_rx_func_ptr) (const void *spi_h, uint8_t *tx_buf,
+typedef uint8_t (*tx_rx_func_ptr) (const void *spi_h, uint8_t *tx_buf,
 	uint8_t *rx_buf, uint32_t transfer_size, uint32_t timeout);
 typedef void (*delay_ms_func_ptr) (uint32_t period, void *any_ptr);
 
