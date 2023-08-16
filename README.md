@@ -5,7 +5,7 @@
 The gamepad and its receiver communicate via bluetooth. The receiver is interfaced via SPI.
 SPI parameters:
 ```
-Clock rate - 100-500 KHz (I personally prefer 250 KHz).
+Clock rate - 100-500 KHz (I personally prefer 250 KHz. And from my experience, it's better not to make the delay between separate bit reads less, than 14 microseconds or ~75 KHz)
 Order - Least Significant Bit First
 Width - 8 bit (Standard)
 CPOL - 1
@@ -55,7 +55,7 @@ R.Trigger	5		11111101
 L.Shift		5		11111011
 R.Shift		5		11110111
 L.Stick.press	4		11111101
-R.Stick		4		11111011
+R.Stick.press	4		11111011
 
 Analog mode
 
