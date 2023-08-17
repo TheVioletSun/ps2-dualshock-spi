@@ -39,7 +39,7 @@ The main polling command results in the response from the gamepad receiver that 
 Control		Byte num	Byte content
 
 Digital mode
-
+```
 Up		4		11101111
 Down		4		10111111
 Left		4		01111111
@@ -56,6 +56,7 @@ L.Shift		5		11111011
 R.Shift		5		11110111
 L.Stick.press	4		11111101
 R.Stick.press	4		11111011
+```
 
 Analog mode
 
