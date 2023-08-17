@@ -42,11 +42,7 @@ uint8_t EXIT_CONFIG_MODE_TX[EXIT_CONFIG_MODE_SIZE] = {
 	0x01, 0x4F, 0x00, 0xFF, 0xFF, 0x03, 0x00, 0x00, 0x00
 };
 
-ps2_state state;
-
 static void ps2_to_idle_state(ps2_dualshock_dev *dev);
-static void ps2_parse_response(uint8_t *resp, ps2_dualshock_dev *dev);
-
 
 /* Function implementation */
 void ps2_init(ps2_dualshock_dev *dev, void* spi_h)
@@ -58,10 +54,7 @@ void ps2_init(ps2_dualshock_dev *dev, void* spi_h)
 	dev->is_button_pressure_on = 1;
 	dev->is_motor_on = 1;
 
-	dev->state = &state;
-
 	ps2_to_idle_state(dev);
-
 }
 
 uint8_t ps2_main_exchange(ps2_dualshock_dev *dev)
@@ -75,7 +68,7 @@ uint8_t ps2_main_exchange(ps2_dualshock_dev *dev)
 	}
 
 	/* parse the response */
-	ps2_parse_response(MAIN_EXCHANGE_RX, dev);
+	dev->state = MAIN_EXCHANGE_RX[3] << 8 | MAIN_EXCHANGE_RX[4];
 
 	dev->delay_ms(10, NULL);
 
@@ -84,49 +77,47 @@ uint8_t ps2_main_exchange(ps2_dualshock_dev *dev)
 
 static void ps2_to_idle_state(ps2_dualshock_dev *dev)
 {
-	dev->state->is_idle = 1;
-	dev->state->up = 0;
-	dev->state->down = 0;
-	dev->state->left = 0;
-	dev->state->right = 0;
-	dev->state->start = 0;
-	dev->state->select = 0;
-	dev->state->cross = 0;
-	dev->state->circle = 0;
-	dev->state->square = 0;
-	dev->state->triangle = 0;
-	dev->state->l_trigger = 0;
-	dev->state->r_trigger = 0;
-	dev->state->l_shift = 0;
-	dev->state->r_shift = 0;
-	dev->state->l_stick_press = 0;
-	dev->state->r_stick_press = 0;
+	dev->state = 0xFFFF;
 }
 
-static void ps2_parse_response(uint8_t *resp, ps2_dualshock_dev *dev)
+/**
+ * The second arg, buttons, taken from headers can be 'OR'ed, like 'BUTTON1 | BUTTON2'
+ * Returns >0 number if any passed button was pressed, 0 otherwise
+ */
+uint8_t ps2_any_button_pressed(ps2_dualshock_dev *dev, uint16_t buttons)
 {
-	if(resp[3] == 0xFF && resp[4] == 0xFF) {
-		ps2_to_idle_state(dev);
-		return;
-	}
+	/**
+	 * Reverse state bits and mask with button values.
+	 * An example: if state is 1011111111111101, it becomes 0100000000000010
+	 * and then:
+	 * 1. For button value like 0000000100000000 it is masked to 0.
+	 * 2. For button values 0000000000000110 it is masked to
+	 * 0000000000000010.
+	 *
+         * Two exclamation marks are to cast some >0 number to 1.
+	 */
+	return !!((dev->state ^ 0xFFFF) & buttons);
+}
 
-	dev->state->is_idle = 0;
-	dev->state->up = !(resp[3] & 0x10);
-	dev->state->down = !(resp[3] & 0x40);
-	dev->state->left = !(resp[3] & 0x80);
-	dev->state->right = !(resp[3] & 0x20);
-	dev->state->start = !(resp[3] & 0x8);
-	dev->state->select = !(resp[3] & 0x1);
-	dev->state->cross = !(resp[4] & 0x40);
-	dev->state->circle = !(resp[4] & 0x20);
-	dev->state->square = !(resp[4] & 0x80);
-	dev->state->triangle = !(resp[4] & 0x10);
-	dev->state->l_trigger = !(resp[4] & 0x1);
-	dev->state->r_trigger = !(resp[4] & 0x2);
-	dev->state->l_shift = !(resp[4] & 0x4);
-	dev->state->r_shift = !(resp[4] & 0x8);
-	dev->state->l_stick_press = !(resp[3] & 0x2);
-	dev->state->r_stick_press = !(resp[3] & 0x4);
+/**
+ * The second arg, buttons, taken from headers can be 'OR'ed, like 'BUTTON1 | BUTTON2'
+ * Returns 1 if all the passed buttons were pressed, 0 otherwise
+ */
+uint8_t ps2_all_buttons_pressed(ps2_dualshock_dev *dev, uint16_t buttons)
+{
+	/**
+	 * Mask state bits with button values and negate.
+	 * An example: if state is 1011111111111101, then:
+	 * 1. For button value like 0000000100000000 it is masked to
+	 * 0000000100000000 and then negated to 0.
+	 * 2. For button values 0100000000000010 it is masked to 0 and then
+	 * negated to 1.
+	 */
+	return !(dev->state & buttons);
+}
 
+uint8_t ps2_is_idle(ps2_dualshock_dev *dev)
+{
+	return !(dev->state ^ 0xFFFF);
 }
 
