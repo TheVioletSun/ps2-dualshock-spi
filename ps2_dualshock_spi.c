@@ -3,6 +3,7 @@
 #include "ps2_dualshock_spi.h"
 #include "porting_spi.h"
 
+
 /* Buffers for transfer commands */
 #define MAIN_EXCHANGE_SIZE 21
 uint8_t MAIN_EXCHANGE_TX[MAIN_EXCHANGE_SIZE] = {
@@ -39,8 +40,10 @@ uint8_t ENABLE_BUTTON_PRESSURE_TX[ENABLE_BUTTON_PRESSURE_SIZE] = {
 
 #define EXIT_CONFIG_MODE_SIZE 9
 uint8_t EXIT_CONFIG_MODE_TX[EXIT_CONFIG_MODE_SIZE] = {
-	0x01, 0x4F, 0x00, 0xFF, 0xFF, 0x03, 0x00, 0x00, 0x00
+	0x01, 0x43, 0x00, 0x00, 0x5A, 0x5A, 0x5A, 0x5A, 0x5A
 };
+
+uint32_t exchange_counter = 0;
 
 static void ps2_to_idle_state(ps2_dualshock_dev *dev);
 
@@ -50,18 +53,103 @@ void ps2_init(ps2_dualshock_dev *dev, void* spi_h)
 	dev->spi_h = spi_h;
 	dev->tx_rx = tx_rx;
 	dev->delay_ms = delay_ms;
-	dev->is_analog_on = 1;
-	dev->is_button_pressure_on = 1;
-	dev->is_motor_on = 1;
 
 	ps2_to_idle_state(dev);
 }
 
+void ps2_configure(ps2_dualshock_dev *dev)
+{
+	/* Enter configuring mode */
+	uint8_t ENTER_CONFIG_MODE_RX[ENTER_CONFIG_MODE_SIZE] = {0};
+	if(dev->tx_rx(dev->spi_h, ENTER_CONFIG_MODE_TX, ENTER_CONFIG_MODE_RX,
+				ENTER_CONFIG_MODE_SIZE, 20) != 0) {
+		/* Something went wrong */
+		ps2_to_idle_state(dev);
+		return;
+	}
+	dev->delay_ms(5, NULL);
+
+#ifdef TURN_ON_MOTORS
+	/* Map motors for the main exchange command. 
+	   4th byte to small motor (0x00), 5th byte to the big one (0x01). */
+	uint8_t TURN_ON_MOTORS_RX[TURN_ON_MOTORS_SIZE] = {0};
+	if(dev->tx_rx(dev->spi_h, TURN_ON_MOTORS_TX, TURN_ON_MOTORS_RX,
+				TURN_ON_MOTORS_SIZE, 20) != 0) {
+		/* Something went wrong */
+		ps2_to_idle_state(dev);
+		return;
+	}
+	dev->delay_ms(5, NULL);
+#endif
+
+	/* Exit configuring mode */
+	uint8_t EXIT_CONFIG_MODE_RX[EXIT_CONFIG_MODE_SIZE] = {0};
+	if(dev->tx_rx(dev->spi_h, EXIT_CONFIG_MODE_TX, EXIT_CONFIG_MODE_RX,
+				EXIT_CONFIG_MODE_SIZE, 20) != 0) {
+		/* Something went wrong */
+		ps2_to_idle_state(dev);
+		return;
+	}
+	dev->delay_ms(5, NULL);
+
+	return;
+}
+
+/**
+ * Small motor can be either powered on or off.
+ * 0xFF on the byte the motor was mapped to turns it on.
+ * All the other values turn it off.
+ */
+void ps2_small_motor(bool power)
+{
+	if(power) {
+		MAIN_EXCHANGE_TX[3] = 0xFF;
+	} else {
+		MAIN_EXCHANGE_TX[3] = 0x00;
+	}
+}
+
+/**
+ * Large motor can vibrate weaker and stronger. 
+ * For that, we supply the byte the motor was mapped to with a value 0x00 - 0xFF,
+ * where 0x00 turns it off and 
+ * 0xFF makes the strongest vibration.
+ */
+void ps2_large_motor(uint8_t power)
+{
+	MAIN_EXCHANGE_TX[4] = power;
+}
+
+/**
+ * The default configuration exchange frequency is once per 50 normal exchanges.
+ */
 uint8_t ps2_main_exchange(ps2_dualshock_dev *dev)
 {
+	return ps2_main_exchange_with_config_freq(dev, 50);
+}
+
+/**
+ * If analog mode, vibration motors or button pressures are enabled, 
+ * we need to send configuration exchanges to the ps2 controller.
+ * 
+ * Here we decide to send such exchanges once per number of normal exchanges.
+ * That is if `configuration_freq` is 50, we send 1 configuration exchange
+ * after every 50 normal exchanges.
+ */
+uint8_t ps2_main_exchange_with_config_freq(ps2_dualshock_dev *dev, uint32_t configuration_freq)
+{
+#if defined(TURN_ON_MOTORS) || defined(TURN_ON_BUTTON_PRESSURE) || defined(TURN_ON_ANALOG)
+
+	exchange_counter++;
+	if(exchange_counter > configuration_freq) {
+		ps2_configure(dev);
+		exchange_counter = 0;
+	}
+#endif
+
 	uint8_t MAIN_EXCHANGE_RX[MAIN_EXCHANGE_SIZE] = {0};
 	if(dev->tx_rx(dev->spi_h, MAIN_EXCHANGE_TX, MAIN_EXCHANGE_RX,
-		   MAIN_EXCHANGE_SIZE, 20) != 0) {
+				MAIN_EXCHANGE_SIZE, 20) != 0) {
 		/* Something went wrong */
 		ps2_to_idle_state(dev);
 		return 1;
@@ -94,7 +182,7 @@ uint8_t ps2_any_button_pressed(ps2_dualshock_dev *dev, uint16_t buttons)
 	 * 2. For button values 0000000000000110 it is masked to
 	 * 0000000000000010.
 	 *
-         * Two exclamation marks are to cast some >0 number to 1.
+	 * Two exclamation marks are to cast some >0 number to 1.
 	 */
 	return !!((dev->state ^ 0xFFFF) & buttons);
 }
