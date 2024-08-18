@@ -38,7 +38,7 @@ The main polling command results in the response from the gamepad receiver that 
 
 Control		Byte num	Byte content
 
-Digital mode
+### Digital mode
 ```
 Up		4		11101111
 Down		4		10111111
@@ -58,7 +58,18 @@ L.Stick.press	4		11111101
 R.Stick.press	4		11111011
 ```
 
-Analog mode
+### Motors (sending to joypad)
+```
+Small motor	4		0 or 1 (turn off and on)
+Large motor	5		0 - 255 (analog value of power)
+```
 
-TBD
+### Analog mode
+Control				Byte num	Byte content
+```
+Right horizontal stick		6		(0 - left, 128 - neutral, 255 - right);
+Right vertical stick		7		(0 - up, 128 - neutral, 255 - down);
+Left horizontal stick		8		(0 - left, 128 - neutral, 255 - right);
+Left vertical stick		9		(0 - up, 128 - neutral, 255 - down); 
+```
 

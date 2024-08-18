@@ -81,7 +81,25 @@ void ps2_configure(ps2_dualshock_dev *dev)
 	}
 	dev->delay_ms(5, NULL);
 #endif
+#ifdef TURN_ON_ANALOG
+	/*
+	 * Map analog sticks.
+	 * Bytes EXCH[5-8] (128 - neutral):
+	 * 5 - Right horizontal stick (0 - left, 255 - right);
+	 * 6 - Right vertical stick (0 - up, 255 - down);
+	 * 7 - Left horizontal stick (0 - left, 255 - right);
+	 * 8 - Left vertical stick (0 - up, 255 - down); 
+         */
+	uint8_t ENABLE_ANALOG_MODE_RX[ENABLE_ANALOG_MODE_SIZE] = {0};
+	if(dev->tx_rx(dev->spi_h, ENABLE_ANALOG_MODE_TX, ENABLE_ANALOG_MODE_RX,
+				ENABLE_ANALOG_MODE_SIZE, 20) != 0) {
+		/* Something went wrong */
+		ps2_to_idle_state(dev);
+		return;
+	}
+	dev->delay_ms(5, NULL);
 
+#endif
 	/* Exit configuring mode */
 	uint8_t EXIT_CONFIG_MODE_RX[EXIT_CONFIG_MODE_SIZE] = {0};
 	if(dev->tx_rx(dev->spi_h, EXIT_CONFIG_MODE_TX, EXIT_CONFIG_MODE_RX,
