@@ -81,15 +81,8 @@ void ps2_configure(ps2_dualshock_dev *dev)
 	}
 	dev->delay_ms(5, NULL);
 #endif
+
 #ifdef TURN_ON_ANALOG
-	/*
-	 * Map analog sticks.
-	 * Bytes EXCH[5-8] (128 - neutral):
-	 * 5 - Right horizontal stick (0 - left, 255 - right);
-	 * 6 - Right vertical stick (0 - up, 255 - down);
-	 * 7 - Left horizontal stick (0 - left, 255 - right);
-	 * 8 - Left vertical stick (0 - up, 255 - down); 
-         */
 	uint8_t ENABLE_ANALOG_MODE_RX[ENABLE_ANALOG_MODE_SIZE] = {0};
 	if(dev->tx_rx(dev->spi_h, ENABLE_ANALOG_MODE_TX, ENABLE_ANALOG_MODE_RX,
 				ENABLE_ANALOG_MODE_SIZE, 20) != 0) {
@@ -176,6 +169,22 @@ uint8_t ps2_main_exchange_with_config_freq(ps2_dualshock_dev *dev, uint32_t conf
 	/* parse the response */
 	dev->state = MAIN_EXCHANGE_RX[3] << 8 | MAIN_EXCHANGE_RX[4];
 
+#ifdef TURN_ON_ANALOG
+	/*
+	 * Map analog sticks.
+	 * Bytes EXCH[5-8] (128 - neutral):
+	 * 5 - Right horizontal stick (0 - left, 255 - right);
+	 * 6 - Right vertical stick (0 - up, 255 - down);
+	 * 7 - Left horizontal stick (0 - left, 255 - right);
+	 * 8 - Left vertical stick (0 - up, 255 - down); 
+	 */
+
+	dev->sticks_state.r_horizontal = MAIN_EXCHANGE_RX[5];
+	dev->sticks_state.r_vertical = MAIN_EXCHANGE_RX[6];
+	dev->sticks_state.l_horizontal = MAIN_EXCHANGE_RX[7];
+	dev->sticks_state.l_vertical = MAIN_EXCHANGE_RX[8];
+#endif
+
 	dev->delay_ms(10, NULL);
 
 	return 0;
@@ -184,6 +193,12 @@ uint8_t ps2_main_exchange_with_config_freq(ps2_dualshock_dev *dev, uint32_t conf
 static void ps2_to_idle_state(ps2_dualshock_dev *dev)
 {
 	dev->state = 0xFFFF;
+#if defined(TURN_ON_ANALOG)
+	dev->sticks_state.r_horizontal = 128;
+	dev->sticks_state.r_vertical = 128;
+	dev->sticks_state.l_horizontal = 128;
+	dev->sticks_state.l_vertical = 128;
+#endif
 }
 
 /**
@@ -222,8 +237,71 @@ uint8_t ps2_all_buttons_pressed(ps2_dualshock_dev *dev, uint16_t buttons)
 	return !(dev->state & buttons);
 }
 
-uint8_t ps2_is_idle(ps2_dualshock_dev *dev)
+uint8_t ps2_buttons_idle(ps2_dualshock_dev *dev)
 {
 	return !(dev->state ^ 0xFFFF);
+}
+
+uint8_t ps2_sticks_idle(ps2_dualshock_dev *dev)
+{
+	return dev->sticks_state.r_horizontal == 128 && dev->sticks_state.r_vertical == 128
+		&& dev->sticks_state.l_horizontal == 128 && dev->sticks_state.l_vertical == 128;
+}
+
+
+uint8_t ps2_r_stick_up(ps2_dualshock_dev *dev)
+{
+	return (dev->sticks_state.r_vertical < 128)
+		? (128 - dev->sticks_state.r_vertical) / 1.28f
+		: 0;
+}
+
+uint8_t ps2_r_stick_down(ps2_dualshock_dev *dev)
+{
+	return (dev->sticks_state.r_vertical > 128)
+		? (dev->sticks_state.r_vertical - 128) / 1.28f
+		: 0;
+}
+
+uint8_t ps2_r_stick_left(ps2_dualshock_dev *dev)
+{
+	return (dev->sticks_state.r_horizontal < 128)
+		? (128 - dev->sticks_state.r_horizontal) / 1.28f
+		: 0;
+}
+
+uint8_t ps2_r_stick_right(ps2_dualshock_dev *dev)
+{
+	return (dev->sticks_state.r_horizontal > 128)
+		? (dev->sticks_state.r_horizontal - 128) / 1.28f
+		: 0;
+}
+
+uint8_t ps2_l_stick_up(ps2_dualshock_dev *dev)
+{
+	return (dev->sticks_state.l_vertical < 128)
+		? (128 - dev->sticks_state.l_vertical) / 1.28f
+		: 0;
+}
+
+uint8_t ps2_l_stick_down(ps2_dualshock_dev *dev)
+{
+	return (dev->sticks_state.l_vertical > 128)
+		? (dev->sticks_state.l_vertical - 128) / 1.28f
+		: 0;
+}
+
+uint8_t ps2_l_stick_left(ps2_dualshock_dev *dev)
+{
+	return (dev->sticks_state.l_horizontal < 128)
+		? (128 - dev->sticks_state.l_horizontal) / 1.28f
+		: 0;
+}
+
+uint8_t ps2_l_stick_right(ps2_dualshock_dev *dev)
+{
+	return (dev->sticks_state.l_horizontal > 128)
+		? (dev->sticks_state.l_horizontal - 128) / 1.28f
+		: 0;
 }
 
