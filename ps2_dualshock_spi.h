@@ -28,7 +28,7 @@ typedef struct {
 
 /* Functions */
 void ps2_init(ps2_dualshock_dev *dev, void* spi_h);
-void ps2_configure(ps2_dualshock_dev *dev);
+uint8_t ps2_configure(ps2_dualshock_dev *dev);
 void ps2_small_motor(bool power);
 void ps2_large_motor(uint8_t power);
 uint8_t ps2_main_exchange(ps2_dualshock_dev *dev);

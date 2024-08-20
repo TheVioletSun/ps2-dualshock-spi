@@ -55,9 +55,10 @@ void ps2_init(ps2_dualshock_dev *dev, void* spi_h)
 	dev->delay_ms = delay_ms;
 
 	ps2_to_idle_state(dev);
+	while(ps2_configure(dev) != 0) {}
 }
 
-void ps2_configure(ps2_dualshock_dev *dev)
+uint8_t ps2_configure(ps2_dualshock_dev *dev)
 {
 	/* Enter configuring mode */
 	uint8_t ENTER_CONFIG_MODE_RX[ENTER_CONFIG_MODE_SIZE] = {0};
@@ -65,7 +66,7 @@ void ps2_configure(ps2_dualshock_dev *dev)
 				ENTER_CONFIG_MODE_SIZE, 20) != 0) {
 		/* Something went wrong */
 		ps2_to_idle_state(dev);
-		return;
+		return 1;
 	}
 	dev->delay_ms(5, NULL);
 
@@ -77,7 +78,7 @@ void ps2_configure(ps2_dualshock_dev *dev)
 				TURN_ON_MOTORS_SIZE, 20) != 0) {
 		/* Something went wrong */
 		ps2_to_idle_state(dev);
-		return;
+		return 1;
 	}
 	dev->delay_ms(5, NULL);
 #endif
@@ -88,7 +89,7 @@ void ps2_configure(ps2_dualshock_dev *dev)
 				ENABLE_ANALOG_MODE_SIZE, 20) != 0) {
 		/* Something went wrong */
 		ps2_to_idle_state(dev);
-		return;
+		return 1;
 	}
 	dev->delay_ms(5, NULL);
 
@@ -99,11 +100,11 @@ void ps2_configure(ps2_dualshock_dev *dev)
 				EXIT_CONFIG_MODE_SIZE, 20) != 0) {
 		/* Something went wrong */
 		ps2_to_idle_state(dev);
-		return;
+		return 1;
 	}
 	dev->delay_ms(5, NULL);
 
-	return;
+	return 0;
 }
 
 /**
@@ -153,7 +154,7 @@ uint8_t ps2_main_exchange_with_config_freq(ps2_dualshock_dev *dev, uint32_t conf
 
 	exchange_counter++;
 	if(exchange_counter > configuration_freq) {
-		ps2_configure(dev);
+		while(ps2_configure(dev) != 0){}
 		exchange_counter = 0;
 	}
 #endif
@@ -172,17 +173,27 @@ uint8_t ps2_main_exchange_with_config_freq(ps2_dualshock_dev *dev, uint32_t conf
 #ifdef TURN_ON_ANALOG
 	/*
 	 * Map analog sticks.
+	 *
+	 * If the joypad doesn't respond with 115 on the second byte, 
+	 * its analog mode is turned off, physically, by button.
+	 *
 	 * Bytes EXCH[5-8] (128 - neutral):
 	 * 5 - Right horizontal stick (0 - left, 255 - right);
 	 * 6 - Right vertical stick (0 - up, 255 - down);
 	 * 7 - Left horizontal stick (0 - left, 255 - right);
 	 * 8 - Left vertical stick (0 - up, 255 - down); 
 	 */
-
-	dev->sticks_state.r_horizontal = MAIN_EXCHANGE_RX[5];
-	dev->sticks_state.r_vertical = MAIN_EXCHANGE_RX[6];
-	dev->sticks_state.l_horizontal = MAIN_EXCHANGE_RX[7];
-	dev->sticks_state.l_vertical = MAIN_EXCHANGE_RX[8];
+	if(MAIN_EXCHANGE_RX[1] == 115) {
+		dev->sticks_state.r_horizontal = MAIN_EXCHANGE_RX[5];
+		dev->sticks_state.r_vertical = MAIN_EXCHANGE_RX[6];
+		dev->sticks_state.l_horizontal = MAIN_EXCHANGE_RX[7];
+		dev->sticks_state.l_vertical = MAIN_EXCHANGE_RX[8];
+	} else {
+		dev->sticks_state.r_horizontal = 128;
+		dev->sticks_state.r_vertical = 128;
+		dev->sticks_state.l_horizontal = 128;
+		dev->sticks_state.l_vertical = 128;
+	}
 #endif
 
 	dev->delay_ms(10, NULL);
