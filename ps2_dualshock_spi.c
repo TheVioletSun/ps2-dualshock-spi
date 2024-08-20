@@ -68,7 +68,7 @@ uint8_t ps2_configure(ps2_dualshock_dev *dev)
 		ps2_to_idle_state(dev);
 		return 1;
 	}
-	dev->delay_ms(5, NULL);
+	dev->delay_ms(8, NULL);
 
 #ifdef TURN_ON_MOTORS
 	/* Map motors for the main exchange command. 
@@ -80,7 +80,7 @@ uint8_t ps2_configure(ps2_dualshock_dev *dev)
 		ps2_to_idle_state(dev);
 		return 1;
 	}
-	dev->delay_ms(5, NULL);
+	dev->delay_ms(8, NULL);
 #endif
 
 #ifdef TURN_ON_ANALOG
@@ -91,7 +91,7 @@ uint8_t ps2_configure(ps2_dualshock_dev *dev)
 		ps2_to_idle_state(dev);
 		return 1;
 	}
-	dev->delay_ms(5, NULL);
+	dev->delay_ms(8, NULL);
 
 #endif
 	/* Exit configuring mode */
@@ -102,7 +102,7 @@ uint8_t ps2_configure(ps2_dualshock_dev *dev)
 		ps2_to_idle_state(dev);
 		return 1;
 	}
-	dev->delay_ms(5, NULL);
+	dev->delay_ms(8, NULL);
 
 	return 0;
 }
@@ -197,7 +197,7 @@ uint8_t ps2_main_exchange_with_config_freq(ps2_dualshock_dev *dev, uint32_t conf
 	}
 #endif
 
-	dev->delay_ms(10, NULL);
+	dev->delay_ms(20, NULL);
 
 	return 0;
 }
