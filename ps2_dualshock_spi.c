@@ -55,7 +55,7 @@ void ps2_init(ps2_dualshock_dev *dev, void* spi_h)
 	dev->delay_ms = delay_ms;
 
 	ps2_to_idle_state(dev);
-	while(ps2_configure(dev) != 0) {}
+	ps2_configure(dev);
 }
 
 uint8_t ps2_configure(ps2_dualshock_dev *dev)
@@ -154,7 +154,8 @@ uint8_t ps2_main_exchange_with_config_freq(ps2_dualshock_dev *dev, uint32_t conf
 
 	exchange_counter++;
 	if(exchange_counter > configuration_freq) {
-		while(ps2_configure(dev) != 0){}
+		if(ps2_configure(dev) != 0)
+			return 1;
 		exchange_counter = 0;
 	}
 #endif
